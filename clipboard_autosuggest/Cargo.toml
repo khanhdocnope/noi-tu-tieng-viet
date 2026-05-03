@@ -1,0 +1,19 @@
+[package]
+name = "clipboard_autosuggest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe                = "0.31"
+arboard               = "3"
+rand                  = "0.9"
+unicode-normalization = "0.1"
+
+[build-dependencies]
+winres = "0.1"
+
+[profile.release]
+opt-level     = 3
+lto           = true
+codegen-units = 1
+strip         = true
