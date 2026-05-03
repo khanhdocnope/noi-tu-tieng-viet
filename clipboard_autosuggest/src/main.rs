@@ -297,9 +297,9 @@ fn start_clipboard_thread(index: Arc<PhraseIndex>, state: Arc<Mutex<AppState>>) 
                 let mut s = state.lock().unwrap();
                 s.paused = !s.paused; // Toggle trạng thái
                 if s.paused {
-                    s.status = "TAM DUNG goi y.".into();
+                    s.status = "⏸️ ĐÃ TẠM DỪNG gợi ý.".into();
                 } else {
-                    s.status = "TIEP TUC goi y.".into();
+                    s.status = "▶️ ĐÃ TIẾP TỤC gợi ý.".into();
                 }
                 continue;
             }
@@ -448,9 +448,9 @@ impl eframe::App for App {
 
             // Hướng dẫn
             ui.label("Copy 1 từ hoặc cụm 2 từ → clipboard tự động thay bằng gợi ý.");
-            ui.label("  • Copy \"!\"  → chế độ TOP TIER ONLY");
-            ui.label("  • Copy \"%\"  → chế độ SMART RANDOM");
-            ui.label("  • Copy \".\"  → TẠM DỪNG / TIẾP TỤC");
+            ui.label("  • Copy \"!\"  → 🎯 chế độ TOP TIER ONLY");
+            ui.label("  • Copy \"%\"  → 🎲 chế độ SMART RANDOM");
+            ui.label("  • Copy \".\"  → ⏸️ TẠM DỪNG / TIẾP TỤC");
             ui.label("  • Copy \"?\"  → hiển thị hướng dẫn này");
 
             ui.add_space(8.0);
@@ -461,11 +461,11 @@ impl eframe::App for App {
             let (mode_text, mode_color) = {
                 let s = self.state.lock().unwrap();
                 if s.paused {
-                    ("[||] ĐANG TẠM DỪNG", egui::Color32::from_rgb(180, 180, 180))
+                    ("⏸️ ĐANG TẠM DỪNG", egui::Color32::from_rgb(180, 180, 180))
                 } else {
                     match s.mode {
-                        Mode::Top   => ("[!] TOP TIER ONLY",                  egui::Color32::from_rgb(220, 80, 80)),
-                        Mode::Smart => ("[%] SMART RANDOM (75% top / 25% any)", egui::Color32::from_rgb(0, 120, 210)),
+                        Mode::Top   => ("🎯 TOP TIER ONLY",                  egui::Color32::from_rgb(220, 80, 80)),
+                        Mode::Smart => ("🎲 SMART RANDOM (75% top / 25% any)", egui::Color32::from_rgb(0, 120, 210)),
                     }
                 }
             };
@@ -489,7 +489,7 @@ impl eframe::App for App {
 
             // Nút thoát
             ui.horizontal(|ui| {
-                ui.add_space(ui.available_width`() / 2.0 - 30.0);
+                ui.add_space(ui.available_width() / 2.0 - 30.0);
                 if ui.button("  Thoát  ").clicked() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
@@ -514,7 +514,7 @@ fn main() {
         exe_dir.join("TuVung.txt"),
         exe_dir.join("../TuVung.txt"),
         exe_dir.join("../../TuVung.txt"),
-        PathBuf::from(r"d:\noi-tu-tieng-viet\TuVung.txt"),
+        PathBuf::from(r"d:\Bot_Noi_Tu_Viet\TuVung.txt"),
     ];
 
     let dict_path = candidates
