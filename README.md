@@ -13,7 +13,8 @@ Phiên bản Rust này được tối ưu hóa về tốc độ, hiệu suất v
 - **Gợi ý thông minh**: Dựa trên tập dữ liệu `TuVung.txt` với hơn 53,000 cụm từ.
 - **Ba chế độ hoạt động**:
     - 🎯 **TOP TIER ONLY**: Luôn chọn từ "hiểm" nhất (ít nhánh nối tiếp nhất). (Copy dấu `!`).
-    - 🎲 **SMART RANDOM**: 75% chọn từ tốt nhất, 25% chọn ngẫu nhiên. (Copy dấu `%`).
+    - 🎲 **SMART RANDOM**: Mặc định 75% chọn từ tốt nhất, 25% chọn ngẫu nhiên. (Copy dấu `%`). 
+        *   **Mẹo**: Bạn có thể tùy chỉnh tỷ lệ bằng cách copy `%a` (với `a` là % ngẫu nhiên). Ví dụ: copy `%10` để có 90% cực phẩm và 10% ngẫu nhiên.
     - ⏸️ **PAUSE**: Tạm dừng mọi gợi ý (Copy dấu `.`). Để tiếp tục, hãy copy lại các lệnh chế độ hoặc một từ mới.
 - **Giao diện nhẹ nhàng**: Hiển thị trạng thái hoạt động và chế độ hiện tại qua GUI tối giản.
 

@@ -164,8 +164,8 @@ fn normalize(s: &str) -> String {
 
 #[derive(Clone, Copy, PartialEq)]
 enum Mode {
-    Smart, // 75% top / 25% any
-    Top,   // 100% top tier
+    Smart(f64), // f64 là tỉ lệ chọn ngẫu nhiên (0.0 - 1.0)
+    Top,        // 100% top tier
 }
 
 /// Pick từ danh sách gợi ý 2-từ
@@ -176,11 +176,11 @@ fn pick_two_word<'a>(candidates: &[&'a Phrase], mode: Mode) -> Option<&'a str> {
     let mut rng = rand::rng();
     match mode {
         Mode::Top => Some(candidates.choose(&mut rng)?.text.as_str()),
-        Mode::Smart => {
-            if rand::random::<f64>() < CHANCE_RANDOM_ANY {
+        Mode::Smart(chance) => {
+            if rand::random::<f64>() < chance {
                 Some(candidates.choose(&mut rng)?.text.as_str())
             } else {
-                // top tier = tất cả (đã limit top_n rồi — không có frequency nên lấy ngẫu nhiên)
+                // top tier = tất cả (vì suggest_next đã lấy top_n)
                 Some(candidates.choose(&mut rng)?.text.as_str())
             }
         }
@@ -200,8 +200,8 @@ fn pick_one_word(ranked: &[RankedPhrase], mode: Mode) -> Option<String> {
             let top: Vec<_> = ranked.iter().filter(|r| r.next_count == best).collect();
             Some(top.choose(&mut rng)?.phrase.clone())
         }
-        Mode::Smart => {
-            if rand::random::<f64>() < CHANCE_RANDOM_ANY {
+        Mode::Smart(chance) => {
+            if rand::random::<f64>() < chance {
                 Some(ranked.choose(&mut rng)?.phrase.clone())
             } else {
                 let best = ranked[0].next_count;
@@ -226,7 +226,7 @@ struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            mode: Mode::Smart,
+            mode: Mode::Smart(0.25),
             status: "Sẵn sàng.".into(),
             last_written: None,
             paused: false,
@@ -286,11 +286,21 @@ fn start_clipboard_thread(index: Arc<PhraseIndex>, state: Arc<Mutex<AppState>>) 
                 s.status = "✅ Đã chuyển sang chế độ TOP TIER ONLY".into();
                 continue;
             }
-            if current_norm == "%" {
+            if current_norm.starts_with('%') {
                 let mut s = state.lock().unwrap();
-                s.mode = Mode::Smart;
+                let chance = if current_norm.len() > 1 {
+                    match current_norm[1..].parse::<f64>() {
+                        Ok(val) => val.clamp(0.0, 100.0) / 100.0,
+                        Err(_) => 0.25,
+                    }
+                } else {
+                    0.25
+                };
+                s.mode = Mode::Smart(chance);
                 s.paused = false;
-                s.status = "✅ Đã chuyển sang chế độ SMART RANDOM".into();
+                let pct_top = (1.0 - chance) * 100.0;
+                let pct_rand = chance * 100.0;
+                s.status = format!("✅ SMART RANDOM: {:.0}% Top / {:.0}% Random", pct_top, pct_rand);
                 continue;
             }
             if current_norm == "." {
@@ -461,11 +471,14 @@ impl eframe::App for App {
             let (mode_text, mode_color) = {
                 let s = self.state.lock().unwrap();
                 if s.paused {
-                    ("⏸️ ĐANG TẠM DỪNG", egui::Color32::from_rgb(180, 180, 180))
+                    ("⏸️ ĐANG TẠM DỪNG".to_string(), egui::Color32::from_rgb(180, 180, 180))
                 } else {
                     match s.mode {
-                        Mode::Top   => ("🎯 TOP TIER ONLY",                  egui::Color32::from_rgb(220, 80, 80)),
-                        Mode::Smart => ("🎲 SMART RANDOM (75% top / 25% any)", egui::Color32::from_rgb(0, 120, 210)),
+                        Mode::Top   => ("🎯 TOP TIER ONLY".to_string(),                  egui::Color32::from_rgb(220, 80, 80)),
+                        Mode::Smart(chance) => (
+                            format!("🎲 SMART RANDOM ({:.0}% top / {:.0}% any)", (1.0 - chance) * 100.0, chance * 100.0),
+                            egui::Color32::from_rgb(0, 120, 210)
+                        ),
                     }
                 }
             };
