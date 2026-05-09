@@ -54,3 +54,17 @@ Nếu bạn muốn tự compile lại ứng dụng:
 - Tự động bỏ qua các nội dung dài hơn 2 từ để tránh xử lý nhầm văn bản thông thường.
 - Có thể tồn tại các lỗi không mong muốn, vui lòng báo cáo cho tôi nếu bạn gặp phải.
 - Có thể một số từ sẽ không có trong từ điển do dữ liệu của các bot là khác nhau, mong bạn thông cảm.
+
+## 📱 Phiên bản Android (Custom Keyboard)
+
+Dự án hiện đã hỗ trợ phiên bản ứng dụng trên Android, hoạt động dưới dạng một **Bàn phím Ảo (Custom Keyboard)**. Bàn phím này tự động đọc Clipboard và ghi đè đáp án vào ô nhập liệu (Messenger, Zalo...) một cách tự động khi bạn chơi game.
+
+### Cách tải và cài đặt APK:
+Dự án được cấu hình sẵn Github Actions để tự động build file APK mới nhất.
+1. Truy cập tab **Actions** trên kho lưu trữ Github của dự án.
+2. Chọn workflow chạy gần nhất, kéo xuống phần **Artifacts**.
+3. Tải file `app-debug.apk` về điện thoại Android và cài đặt.
+4. Mở ứng dụng **Cài đặt Bot Nối Từ** trên điện thoại, làm theo 2 bước hướng dẫn để cấp quyền và chọn bàn phím Bot.
+
+## 📄 Giấy phép (License)
+Dự án được phân phối dưới giấy phép [MIT License](LICENSE).
