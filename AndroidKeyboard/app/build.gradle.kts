@@ -29,7 +29,7 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
-        viewBinding = true
+        // viewBinding disabled - using findViewById instead
     }
 }
 

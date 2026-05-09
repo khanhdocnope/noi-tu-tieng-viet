@@ -1,6 +1,5 @@
 package com.botnoitu.keyboard
 
-import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.inputmethodservice.InputMethodService
