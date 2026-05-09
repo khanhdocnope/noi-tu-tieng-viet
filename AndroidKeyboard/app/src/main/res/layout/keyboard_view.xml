@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/keyboard_bg"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Status Bar -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sẵn sàng. Hãy copy từ của đối thủ!"
+        android:textColor="@color/status_text"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <Button
+            android:id="@+id/btnMode"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1.5"
+            android:text="🎯 Top Tier"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="@color/key_bg"
+            android:textColor="@color/key_text" />
+
+        <Button
+            android:id="@+id/btnPause"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1"
+            android:text="⏸️ Tạm dừng"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="@color/key_bg"
+            android:textColor="@color/key_text" />
+
+        <Button
+            android:id="@+id/btnSwitch"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_weight="1.5"
+            android:text="🌐 Đổi bàn phím"
+            android:textSize="12sp"
+            android:backgroundTint="@color/accent"
+            android:textColor="@color/key_text" />
+    </LinearLayout>
+
+</LinearLayout>
