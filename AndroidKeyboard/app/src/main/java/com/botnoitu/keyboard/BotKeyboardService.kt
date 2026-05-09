@@ -15,6 +15,8 @@ import kotlin.random.Random
 class BotKeyboardService : InputMethodService() {
 
     private lateinit var tvStatus: TextView
+    private lateinit var tvModeBadge: TextView
+    private lateinit var viewDot: View
     private var isPaused = false
     private var currentMode = Mode.SMART_RANDOM
 
@@ -36,6 +38,8 @@ class BotKeyboardService : InputMethodService() {
         val view = layoutInflater.inflate(R.layout.keyboard_view, null)
         
         tvStatus = view.findViewById(R.id.tvStatus)
+        tvModeBadge = view.findViewById(R.id.tvModeBadge)
+        viewDot = view.findViewById(R.id.viewDot)
         val btnMode = view.findViewById<Button>(R.id.btnMode)
         val btnPause = view.findViewById<Button>(R.id.btnPause)
         val btnSwitch = view.findViewById<Button>(R.id.btnSwitch)
@@ -65,16 +69,28 @@ class BotKeyboardService : InputMethodService() {
 
     private fun updateUI(btnMode: Button, btnPause: Button) {
         if (isPaused) {
-            tvStatus.text = "⏸️ Đã tạm dừng."
-            btnPause.text = "▶️ Tiếp tục"
+            tvStatus.text = "⏸️ Đang tạm dừng. Copy bất kỳ từ nào để tiếp tục."
+            btnPause.text = "▶  Tiếp tục"
+            tvModeBadge.text = "⏸ TẠM DỪNG"
+            tvModeBadge.setTextColor(android.graphics.Color.parseColor("#FFB800"))
+            tvModeBadge.setBackgroundResource(R.drawable.btn_muted)
+            viewDot.setBackgroundColor(android.graphics.Color.parseColor("#FFB800"))
         } else {
-            btnPause.text = "⏸️ Tạm dừng"
+            btnPause.text = "⏸  Dừng"
             if (currentMode == Mode.TOP_TIER) {
-                btnMode.text = "🎯 Top Tier"
-                tvStatus.text = "Chế độ: Cực phẩm. Chờ copy..."
+                btnMode.text = "🎯  CỰC PHẨM"
+                tvStatus.text = "Chế độ cực phẩm. Chờ copy..."
+                tvModeBadge.text = "🎯 CỰC PHẨM"
+                tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00FF88"))
+                tvModeBadge.setBackgroundResource(R.drawable.badge_top)
+                viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00FF88"))
             } else {
-                btnMode.text = "🎲 Random (75/25)"
-                tvStatus.text = "Chế độ: Thông minh. Chờ copy..."
+                btnMode.text = "🎲  THÔNG MINH"
+                tvStatus.text = "Chế độ thông minh. Chờ copy..."
+                tvModeBadge.text = "🎲 THÔNG MINH"
+                tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00D4FF"))
+                tvModeBadge.setBackgroundResource(R.drawable.badge_smart)
+                viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00D4FF"))
             }
         }
     }

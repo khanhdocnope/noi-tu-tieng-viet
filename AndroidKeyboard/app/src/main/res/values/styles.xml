@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base rounded corner for card elements -->
+    <style name="Card.Bot" parent="">
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">12dp</item>
+    </style>
+
+    <!-- Neon cyan button style -->
+    <style name="Btn.Neon" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/btn_neon</item>
+        <item name="android:textColor">@color/accent_cyan</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- Accent button — highlighted action -->
+    <style name="Btn.Accent" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/btn_accent</item>
+        <item name="android:textColor">@color/bg_dark</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- Muted pause button -->
+    <style name="Btn.Muted" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/btn_muted</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+</resources>

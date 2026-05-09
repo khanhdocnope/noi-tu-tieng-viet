@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Bot Nối Từ Keyboard</string>
+    <string name="mode_top">🎯  CỰC PHẨM</string>
+    <string name="mode_smart">🎲  THÔNG MINH</string>
+    <string name="btn_pause">⏸  Tạm dừng</string>
+    <string name="btn_resume">▶  Tiếp tục</string>
+    <string name="btn_switch">🌐  Đổi bàn phím</string>
+    <string name="status_ready">Hãy copy từ của đối thủ…</string>
 </resources>

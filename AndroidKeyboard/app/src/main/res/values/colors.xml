@@ -1,8 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="keyboard_bg">#2D2D2D</color>
-    <color name="key_bg">#424242</color>
-    <color name="key_text">#FFFFFF</color>
-    <color name="status_text">#4CAF50</color>
-    <color name="accent">#2196F3</color>
+    <!-- Backgrounds -->
+    <color name="bg_dark">#0A0E1A</color>
+    <color name="bg_card">#121829</color>
+    <color name="bg_card_light">#1C2438</color>
+    <color name="bg_surface">#0F1420</color>
+
+    <!-- Accents -->
+    <color name="accent_cyan">#00D4FF</color>
+    <color name="accent_cyan_dim">#0099BB</color>
+    <color name="accent_purple">#7C3AED</color>
+    <color name="accent_green">#00FF88</color>
+    <color name="accent_amber">#FFB800</color>
+    <color name="accent_red">#FF4757</color>
+
+    <!-- Text -->
+    <color name="text_primary">#EAEAEA</color>
+    <color name="text_secondary">#8A9BB5</color>
+    <color name="text_on_accent">#FFFFFF</color>
+
+    <!-- Button backgrounds -->
+    <color name="btn_mode_bg">#1A2640</color>
+    <color name="btn_pause_bg">#1A2640</color>
+    <color name="btn_switch_bg">#1A2640</color>
+
+    <!-- Divider -->
+    <color name="divider">#1E2D47</color>
+
+    <!-- Status bar -->
+    <color name="status_bg">#0D1524</color>
 </resources>

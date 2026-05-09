@@ -2,60 +2,128 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/keyboard_bg"
+    android:background="@color/bg_dark"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
-    <!-- Status Bar -->
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Sẵn sàng. Hãy copy từ của đối thủ!"
-        android:textColor="@color/status_text"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:padding="8dp"
-        android:layout_marginBottom="8dp"/>
-
+    <!-- ══ Header Row ══ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:weightSum="4">
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
 
+        <!-- App brand dot -->
+        <View
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:background="@color/accent_cyan"
+            android:layout_marginEnd="8dp"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="BOT NỐI TỪ"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:letterSpacing="0.15"
+            android:textStyle="bold"/>
+
+        <!-- Mode Badge -->
+        <TextView
+            android:id="@+id/tvModeBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎯 CỰC PHẨM"
+            android:textColor="@color/accent_green"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:background="@drawable/badge_top"/>
+    </LinearLayout>
+
+    <!-- ══ Status Display ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_status"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_marginBottom="10dp">
+
+        <!-- Pulsing dot indicator -->
+        <View
+            android:id="@+id/viewDot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@color/accent_cyan"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Hãy copy từ của đối thủ…"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:singleLine="true"
+            android:ellipsize="end"/>
+    </LinearLayout>
+
+    <!-- ══ Action Buttons Row ══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="10"
+        android:layout_marginBottom="2dp">
+
+        <!-- Mode Toggle -->
         <Button
             android:id="@+id/btnMode"
+            style="@style/Btn.Neon"
             android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1.5"
-            android:text="🎯 Top Tier"
-            android:textSize="12sp"
-            android:layout_marginEnd="4dp"
-            android:backgroundTint="@color/key_bg"
-            android:textColor="@color/key_text" />
+            android:layout_height="48dp"
+            android:layout_weight="4"
+            android:layout_marginEnd="6dp"
+            android:text="🎯  CỰC PHẨM"
+            android:textSize="12sp"/>
 
+        <!-- Pause -->
         <Button
             android:id="@+id/btnPause"
+            style="@style/Btn.Muted"
             android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1"
-            android:text="⏸️ Tạm dừng"
-            android:textSize="12sp"
-            android:layout_marginEnd="4dp"
-            android:backgroundTint="@color/key_bg"
-            android:textColor="@color/key_text" />
+            android:layout_height="48dp"
+            android:layout_weight="3"
+            android:layout_marginEnd="6dp"
+            android:text="⏸  Dừng"
+            android:textSize="12sp"/>
 
+        <!-- Switch Keyboard -->
         <Button
             android:id="@+id/btnSwitch"
+            style="@style/Btn.Accent"
             android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1.5"
-            android:text="🌐 Đổi bàn phím"
-            android:textSize="12sp"
-            android:backgroundTint="@color/accent"
-            android:textColor="@color/key_text" />
+            android:layout_height="48dp"
+            android:layout_weight="3"
+            android:text="🌐  Đổi"
+            android:textSize="12sp"/>
+
     </LinearLayout>
 
 </LinearLayout>
