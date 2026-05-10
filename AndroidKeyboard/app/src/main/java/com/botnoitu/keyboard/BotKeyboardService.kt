@@ -40,6 +40,13 @@ class BotKeyboardService : InputMethodService() {
         tvStatus = view.findViewById(R.id.tvStatus)
         tvModeBadge = view.findViewById(R.id.tvModeBadge)
         viewDot = view.findViewById(R.id.viewDot)
+        
+        // Start pulsing animation for the dot
+        val animator = android.animation.ObjectAnimator.ofFloat(viewDot, "alpha", 1f, 0.2f, 1f)
+        animator.duration = 1500
+        animator.repeatCount = android.animation.ObjectAnimator.INFINITE
+        animator.start()
+
         val btnMode = view.findViewById<Button>(R.id.btnMode)
         val btnPause = view.findViewById<Button>(R.id.btnPause)
         val btnSwitch = view.findViewById<Button>(R.id.btnSwitch)

@@ -43,11 +43,11 @@
             android:textColor="@color/accent_green"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:letterSpacing="0.1"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:background="@drawable/badge_top"/>
     </LinearLayout>
 
@@ -67,8 +67,8 @@
         <!-- Pulsing dot indicator -->
         <View
             android:id="@+id/viewDot"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
             android:background="@color/accent_cyan"
             android:layout_marginEnd="10dp"/>
 
@@ -80,6 +80,7 @@
             android:text="Hãy copy từ của đối thủ…"
             android:textColor="@color/text_primary"
             android:textSize="13sp"
+            android:letterSpacing="0.03"
             android:singleLine="true"
             android:ellipsize="end"/>
     </LinearLayout>

@@ -6,12 +6,22 @@
     android:background="@color/bg_dark">
 
     <!-- ══ Top Banner ══ -->
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="180dp"
-        android:orientation="vertical"
-        android:gravity="center"
         android:background="@color/bg_surface">
+        
+        <!-- Glow Effect -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_banner_glow"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
 
         <!-- Decorative line top -->
         <View
@@ -42,7 +52,8 @@
             android:layout_height="3dp"
             android:background="@color/accent_cyan"
             android:layout_marginTop="16dp"/>
-    </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- ══ Setup Steps ══ -->
     <ScrollView
@@ -186,6 +197,39 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:lineSpacingExtra="4dp"/>
+            </LinearLayout>
+
+            <!-- Test Area -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🧪 KHU VỰC THỬ NGHIỆM"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.05"/>
+
+                <EditText
+                    android:id="@+id/etTestArea"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:background="@drawable/bg_edittext_test"
+                    android:gravity="top|start"
+                    android:hint="Chạm vào đây để thử bàn phím...\n\n(Thử gõ hoặc dán một từ để xem Bot hoạt động thế nào)"
+                    android:textColorHint="@color/text_secondary"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:padding="16dp"
+                    android:inputType="textMultiLine"
+                    android:scrollbars="vertical"/>
             </LinearLayout>
 
         </LinearLayout>
