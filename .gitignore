@@ -23,6 +23,6 @@ local.properties
 *.dylib
 
 # --- AI Agent / OpenSpec (Private) ---
-.agent/
-openspec/
-.gemini/
+# .agent/
+# openspec/
+# .gemini/
