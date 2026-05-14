@@ -98,7 +98,7 @@ impl PhraseIndex {
     }
 
     /// Gợi ý cụm tiếp theo (input 2 từ): lấy last_word → các cụm bắt đầu bằng last_word
-    fn suggest_next(&self, phrase: &str, top_n: usize) -> Vec<&Phrase> {
+    fn suggest_next(&self, phrase: &str, top_n: usize, mode: Mode) -> Vec<RankedPhrase> {
         let parts: Vec<&str> = phrase.split_whitespace().collect();
         if parts.len() != 2 {
             return vec![];
@@ -108,14 +108,33 @@ impl PhraseIndex {
             Some(v) => v,
             None => return vec![],
         };
-        // Trả về top_n (đã sort sẵn khi load nếu cần; hiện giữ thứ tự file)
-        indices.iter().take(top_n).map(|&i| &self.phrases[i]).collect()
+        
+        let mut ranked: Vec<RankedPhrase> = indices
+            .iter()
+            .take(200) // Lấy tối đa 200 cụm để rank
+            .map(|&i| {
+                let p = &self.phrases[i];
+                let next_count = self.by_first.get(&p.last).map(|v| v.len()).unwrap_or(0);
+                RankedPhrase {
+                    phrase: p.text.clone(),
+                    next_count,
+                }
+            })
+            .collect();
+
+        match mode {
+            Mode::Bottom => ranked.sort_by_key(|r| (std::cmp::Reverse(r.next_count))),
+            _ => ranked.sort_by_key(|r| r.next_count),
+        }
+
+        ranked.truncate(top_n);
+        ranked
     }
 
     /// Gợi ý cụm từ khi input 1 từ:
     ///   - Tìm các cụm bắt đầu bằng first_word
     ///   - Rank theo số lượng cụm tiếp theo (next_count) tăng dần → ít nhánh trước
-    fn suggest_from_first(&self, first_word: &str, top_n: usize) -> Vec<RankedPhrase> {
+    fn suggest_from_first(&self, first_word: &str, top_n: usize, mode: Mode) -> Vec<RankedPhrase> {
         let indices = match self.by_first.get(first_word) {
             Some(v) => v,
             None => return vec![],
@@ -132,7 +151,12 @@ impl PhraseIndex {
                 }
             })
             .collect();
-        ranked.sort_by_key(|r| r.next_count);
+        
+        match mode {
+            Mode::Bottom => ranked.sort_by_key(|r| (std::cmp::Reverse(r.next_count))),
+            _ => ranked.sort_by_key(|r| r.next_count),
+        }
+        
         ranked.truncate(top_n);
         ranked
     }
@@ -166,22 +190,38 @@ fn normalize(s: &str) -> String {
 enum Mode {
     Smart(f64), // f64 là tỉ lệ chọn ngẫu nhiên (0.0 - 1.0)
     Top,        // 100% top tier
+    Bottom,     // 100% bottom tier (highest branches)
 }
 
 /// Pick từ danh sách gợi ý 2-từ
-fn pick_two_word<'a>(candidates: &[&'a Phrase], mode: Mode) -> Option<&'a str> {
+fn pick_two_word(candidates: &[RankedPhrase], mode: Mode) -> Option<String> {
     if candidates.is_empty() {
         return None;
     }
     let mut rng = rand::rng();
     match mode {
-        Mode::Top => Some(candidates.choose(&mut rng)?.text.as_str()),
+        Mode::Top => {
+            let best = candidates[0].next_count;
+            let top: Vec<_> = candidates.iter().filter(|r| r.next_count == best).collect();
+            Some(top.choose(&mut rng)?.phrase.clone())
+        }
         Mode::Smart(chance) => {
             if rand::random::<f64>() < chance {
-                Some(candidates.choose(&mut rng)?.text.as_str())
+                Some(candidates.choose(&mut rng)?.phrase.clone())
             } else {
-                // top tier = tất cả (vì suggest_next đã lấy top_n)
-                Some(candidates.choose(&mut rng)?.text.as_str())
+                let best = candidates[0].next_count;
+                let top: Vec<_> = candidates.iter().filter(|r| r.next_count == best).collect();
+                Some(top.choose(&mut rng)?.phrase.clone())
+            }
+        }
+        Mode::Bottom => {
+            // Ưu tiên từ có hơn 4 cách nối tiếp
+            let rich: Vec<_> = candidates.iter().filter(|r| r.next_count > 4).collect();
+            if !rich.is_empty() {
+                Some(rich.choose(&mut rng)?.phrase.clone())
+            } else {
+                // Không có từ nào > 4 cách nối → chọn ngẫu nhiên
+                Some(candidates.choose(&mut rng)?.phrase.clone())
             }
         }
     }
@@ -207,6 +247,16 @@ fn pick_one_word(ranked: &[RankedPhrase], mode: Mode) -> Option<String> {
                 let best = ranked[0].next_count;
                 let top: Vec<_> = ranked.iter().filter(|r| r.next_count == best).collect();
                 Some(top.choose(&mut rng)?.phrase.clone())
+            }
+        }
+        Mode::Bottom => {
+            // Ưu tiên từ có hơn 4 cách nối tiếp
+            let rich: Vec<_> = ranked.iter().filter(|r| r.next_count > 4).collect();
+            if !rich.is_empty() {
+                Some(rich.choose(&mut rng)?.phrase.clone())
+            } else {
+                // Không có từ nào > 4 cách nối → chọn ngẫu nhiên
+                Some(ranked.choose(&mut rng)?.phrase.clone())
             }
         }
     }
@@ -286,6 +336,13 @@ fn start_clipboard_thread(index: Arc<PhraseIndex>, state: Arc<Mutex<AppState>>) 
                 s.status = "✅ Đã chuyển sang chế độ TOP TIER ONLY".into();
                 continue;
             }
+            if current_norm == "%!" {
+                let mut s = state.lock().unwrap();
+                s.mode = Mode::Bottom;
+                s.paused = false;
+                s.status = "✅ Đã chuyển sang chế độ BOTTOM TIER (Top cuối)".into();
+                continue;
+            }
             if current_norm.starts_with('%') {
                 let mut s = state.lock().unwrap();
                 let chance = if current_norm.len() > 1 {
@@ -332,18 +389,18 @@ fn start_clipboard_thread(index: Arc<PhraseIndex>, state: Arc<Mutex<AppState>>) 
             let mode = state.lock().unwrap().mode;
 
             let suggestion: Option<String> = if parts.len() == 1 {
-                let ranked = index.suggest_from_first(parts[0], TOP_N);
+                let ranked = index.suggest_from_first(parts[0], TOP_N, mode);
                 pick_one_word(&ranked, mode)
             } else {
                 // Logic cụm 2 từ:
                 // Thử tìm gợi ý từ từ thứ 2 bất kể cụm này có trong từ điển không
-                let candidates = index.suggest_next(&current_norm, TOP_N);
+                let candidates = index.suggest_next(&current_norm, TOP_N, mode);
                 if candidates.is_empty() {
                     let mut s = state.lock().unwrap();
                     s.status = format!("Không tìm thấy từ bắt đầu bằng \"{}\"", parts[1]);
                     None
                 } else {
-                    pick_two_word(&candidates, mode).map(|s| s.to_string())
+                    pick_two_word(&candidates, mode)
                 }
             };
 
@@ -460,6 +517,7 @@ impl eframe::App for App {
             ui.label("Copy 1 từ hoặc cụm 2 từ → clipboard tự động thay bằng gợi ý.");
             ui.label("  • Copy \"!\"  → 🎯 chế độ TOP TIER ONLY");
             ui.label("  • Copy \"%\"  → 🎲 chế độ SMART RANDOM");
+            ui.label("  • Copy \"%!\" → 🔥 chế độ BOTTOM TIER (Top cuối)");
             ui.label("  • Copy \".\"  → ⏸️ TẠM DỪNG / TIẾP TỤC");
             ui.label("  • Copy \"?\"  → hiển thị hướng dẫn này");
 
@@ -479,6 +537,7 @@ impl eframe::App for App {
                             format!("🎲 SMART RANDOM ({:.0}% top / {:.0}% any)", (1.0 - chance) * 100.0, chance * 100.0),
                             egui::Color32::from_rgb(0, 120, 210)
                         ),
+                        Mode::Bottom => ("🔥 BOTTOM TIER (Top cuối)".to_string(),           egui::Color32::from_rgb(210, 120, 0)),
                     }
                 }
             };

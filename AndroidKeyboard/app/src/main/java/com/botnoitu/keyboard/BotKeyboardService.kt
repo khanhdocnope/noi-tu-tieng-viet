@@ -24,7 +24,7 @@ class BotKeyboardService : InputMethodService() {
     private val phraseSet = mutableSetOf<String>()
     private val byFirst = mutableMapOf<String, MutableList<Int>>()
 
-    enum class Mode { TOP_TIER, SMART_RANDOM }
+    enum class Mode { TOP_TIER, SMART_RANDOM, BOTTOM_TIER }
 
     data class Phrase(val text: String, val last: String)
     data class RankedPhrase(val phrase: String, val nextCount: Int)
@@ -54,7 +54,12 @@ class BotKeyboardService : InputMethodService() {
         updateUI(btnMode, btnPause)
 
         btnMode.setOnClickListener {
-            currentMode = if (currentMode == Mode.TOP_TIER) Mode.SMART_RANDOM else Mode.TOP_TIER
+            // Xoay vòng: TOP_TIER → SMART_RANDOM → BOTTOM_TIER → TOP_TIER
+            currentMode = when (currentMode) {
+                Mode.TOP_TIER    -> Mode.SMART_RANDOM
+                Mode.SMART_RANDOM -> Mode.BOTTOM_TIER
+                Mode.BOTTOM_TIER  -> Mode.TOP_TIER
+            }
             isPaused = false
             updateUI(btnMode, btnPause)
         }
@@ -84,20 +89,31 @@ class BotKeyboardService : InputMethodService() {
             viewDot.setBackgroundColor(android.graphics.Color.parseColor("#FFB800"))
         } else {
             btnPause.text = "⏸  Dừng"
-            if (currentMode == Mode.TOP_TIER) {
-                btnMode.text = "🎯  CỰC PHẨM"
-                tvStatus.text = "Chế độ cực phẩm. Chờ copy..."
-                tvModeBadge.text = "🎯 CỰC PHẨM"
-                tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00FF88"))
-                tvModeBadge.setBackgroundResource(R.drawable.badge_top)
-                viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00FF88"))
-            } else {
-                btnMode.text = "🎲  THÔNG MINH"
-                tvStatus.text = "Chế độ thông minh. Chờ copy..."
-                tvModeBadge.text = "🎲 THÔNG MINH"
-                tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00D4FF"))
-                tvModeBadge.setBackgroundResource(R.drawable.badge_smart)
-                viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00D4FF"))
+            when (currentMode) {
+                Mode.TOP_TIER -> {
+                    btnMode.text = "🎯  CỰC PHẨM"
+                    tvStatus.text = "Chế độ cực phẩm. Chờ copy..."
+                    tvModeBadge.text = "🎯 CỰC PHẨM"
+                    tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00FF88"))
+                    tvModeBadge.setBackgroundResource(R.drawable.badge_top)
+                    viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00FF88"))
+                }
+                Mode.SMART_RANDOM -> {
+                    btnMode.text = "🎲  THÔNG MINH"
+                    tvStatus.text = "Chế độ thông minh. Chờ copy..."
+                    tvModeBadge.text = "🎲 THÔNG MINH"
+                    tvModeBadge.setTextColor(android.graphics.Color.parseColor("#00D4FF"))
+                    tvModeBadge.setBackgroundResource(R.drawable.badge_smart)
+                    viewDot.setBackgroundColor(android.graphics.Color.parseColor("#00D4FF"))
+                }
+                Mode.BOTTOM_TIER -> {
+                    btnMode.text = "🔥  TOP CUỐI"
+                    tvStatus.text = "Chế độ top cuối. Chờ copy..."
+                    tvModeBadge.text = "🔥 TOP CUỐI"
+                    tvModeBadge.setTextColor(android.graphics.Color.parseColor("#FF7A00"))
+                    tvModeBadge.setBackgroundResource(R.drawable.btn_muted)
+                    viewDot.setBackgroundColor(android.graphics.Color.parseColor("#FF7A00"))
+                }
             }
         }
     }
@@ -134,7 +150,7 @@ class BotKeyboardService : InputMethodService() {
                 tvStatus.text = "Không tìm thấy từ tiếp theo!"
                 null
             } else {
-                pickTwoWord(candidates)?.text
+                pickTwoWord(candidates)?.phrase
             }
         }
 
@@ -181,12 +197,25 @@ class BotKeyboardService : InputMethodService() {
         }
     }
 
-    private fun suggestNext(phrase: String, topN: Int): List<Phrase> {
+    /**
+     * Tìm gợi ý từ từ thứ 2 của cụm, trả về RankedPhrase có nextCount.
+     * Sort theo mode: tăng dần (TOP/SMART) hoặc giảm dần (BOTTOM).
+     */
+    private fun suggestNext(phrase: String, topN: Int): List<RankedPhrase> {
         val parts = phrase.split(" ")
         if (parts.size != 2) return emptyList()
         val lastWord = parts[1]
         val indices = byFirst[lastWord] ?: return emptyList()
-        return indices.take(topN).map { phrases[it] }
+
+        val ranked = indices.take(200).map { i ->
+            val p = phrases[i]
+            val nextCount = byFirst[p.last]?.size ?: 0
+            RankedPhrase(p.text, nextCount)
+        }
+        return when (currentMode) {
+            Mode.BOTTOM_TIER -> ranked.sortedByDescending { it.nextCount }.take(topN)
+            else             -> ranked.sortedBy { it.nextCount }.take(topN)
+        }
     }
 
     private fun suggestFromFirst(firstWord: String, topN: Int): List<RankedPhrase> {
@@ -195,15 +224,33 @@ class BotKeyboardService : InputMethodService() {
             val p = phrases[i]
             val nextCount = byFirst[p.last]?.size ?: 0
             RankedPhrase(p.text, nextCount)
-        }.sortedBy { it.nextCount }.take(topN)
-        return ranked
+        }
+        return when (currentMode) {
+            Mode.BOTTOM_TIER -> ranked.sortedByDescending { it.nextCount }.take(topN)
+            else             -> ranked.sortedBy { it.nextCount }.take(topN)
+        }
     }
 
-    private fun pickTwoWord(candidates: List<Phrase>): Phrase? {
+    private fun pickTwoWord(candidates: List<RankedPhrase>): RankedPhrase? {
         if (candidates.isEmpty()) return null
         return when (currentMode) {
-            Mode.TOP_TIER -> candidates.random()
-            Mode.SMART_RANDOM -> if (Random.nextDouble() < 0.25) candidates.random() else candidates.random() // Same as Rust logic for randomizing top pool
+            Mode.TOP_TIER -> {
+                val best = candidates[0].nextCount
+                candidates.filter { it.nextCount == best }.random()
+            }
+            Mode.SMART_RANDOM -> {
+                if (Random.nextDouble() < 0.25) {
+                    candidates.random()
+                } else {
+                    val best = candidates[0].nextCount
+                    candidates.filter { it.nextCount == best }.random()
+                }
+            }
+            Mode.BOTTOM_TIER -> {
+                // Ưu tiên từ có hơn 4 cách nối tiếp
+                val rich = candidates.filter { it.nextCount > 4 }
+                if (rich.isNotEmpty()) rich.random() else candidates.random()
+            }
         }
     }
 
@@ -223,6 +270,11 @@ class BotKeyboardService : InputMethodService() {
                     val top = ranked.filter { it.nextCount == bestCount }
                     top.random().phrase
                 }
+            }
+            Mode.BOTTOM_TIER -> {
+                // Ưu tiên từ có hơn 4 cách nối tiếp
+                val rich = ranked.filter { it.nextCount > 4 }
+                if (rich.isNotEmpty()) rich.random().phrase else ranked.random().phrase
             }
         }
     }
