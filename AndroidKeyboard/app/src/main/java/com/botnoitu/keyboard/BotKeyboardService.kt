@@ -17,8 +17,26 @@ class BotKeyboardService : InputMethodService() {
     private lateinit var tvStatus: TextView
     private lateinit var tvModeBadge: TextView
     private lateinit var viewDot: View
+    private lateinit var layoutBotControl: View
+    private lateinit var layoutQwerty: View
+
     private var isPaused = false
+    private var isStealthMode = false       // true = QWERTY mode, false = Bot mode
+    private var isShiftOn = false
     private var currentMode = Mode.SMART_RANDOM
+
+    // ── Telex engine state ──────────────────────────────────────────
+    private var currentWord = StringBuilder()   // buffer chữ đang gõ
+
+    // Bảng tổ hợp âm (diacritics) Telex
+    private val toneMap = mapOf("s" to "\u0301", "f" to "\u0300", "r" to "\u0309", "x" to "\u0303", "j" to "\u0323")
+    private val modifierMap = mapOf(
+        "aa" to "â", "aw" to "ă",
+        "ee" to "ê",
+        "oo" to "ô", "ow" to "ơ",
+        "uw" to "ư", "uw" to "ư",
+        "dd" to "đ"
+    )
 
     private val phrases = mutableListOf<Phrase>()
     private val phraseSet = mutableSetOf<String>()
@@ -36,12 +54,14 @@ class BotKeyboardService : InputMethodService() {
 
     override fun onCreateInputView(): View {
         val view = layoutInflater.inflate(R.layout.keyboard_view, null)
-        
+
         tvStatus = view.findViewById(R.id.tvStatus)
         tvModeBadge = view.findViewById(R.id.tvModeBadge)
         viewDot = view.findViewById(R.id.viewDot)
-        
-        // Start pulsing animation for the dot
+        layoutBotControl = view.findViewById(R.id.layoutBotControl)
+        layoutQwerty = view.findViewById(R.id.layoutQwerty)
+
+        // Pulsing dot animation
         val animator = android.animation.ObjectAnimator.ofFloat(viewDot, "alpha", 1f, 0.2f, 1f)
         animator.duration = 1500
         animator.repeatCount = android.animation.ObjectAnimator.INFINITE
@@ -50,13 +70,33 @@ class BotKeyboardService : InputMethodService() {
         val btnMode = view.findViewById<Button>(R.id.btnMode)
         val btnPause = view.findViewById<Button>(R.id.btnPause)
         val btnSwitch = view.findViewById<Button>(R.id.btnSwitch)
+        val btnStealthToggle = view.findViewById<TextView>(R.id.btnStealthToggle)
 
         updateUI(btnMode, btnPause)
 
+        // ── Stealth Toggle ──────────────────────────────────────────
+        btnStealthToggle.setOnClickListener {
+            isStealthMode = !isStealthMode
+            currentWord.clear()
+            if (isStealthMode) {
+                layoutBotControl.visibility = View.GONE
+                layoutQwerty.visibility = View.VISIBLE
+                tvModeBadge.visibility = View.GONE
+                btnStealthToggle.text = "🤖"
+                tvStatus.text = "Chế độ gõ tay. Nhấn 🤖 để bật Bot."
+            } else {
+                layoutBotControl.visibility = View.VISIBLE
+                layoutQwerty.visibility = View.GONE
+                tvModeBadge.visibility = View.VISIBLE
+                btnStealthToggle.text = "⌨"
+                updateUI(btnMode, btnPause)
+            }
+        }
+
+        // ── Bot Control Buttons ─────────────────────────────────────
         btnMode.setOnClickListener {
-            // Xoay vòng: TOP_TIER → SMART_RANDOM → BOTTOM_TIER → TOP_TIER
             currentMode = when (currentMode) {
-                Mode.TOP_TIER    -> Mode.SMART_RANDOM
+                Mode.TOP_TIER     -> Mode.SMART_RANDOM
                 Mode.SMART_RANDOM -> Mode.BOTTOM_TIER
                 Mode.BOTTOM_TIER  -> Mode.TOP_TIER
             }
@@ -74,10 +114,130 @@ class BotKeyboardService : InputMethodService() {
             imm.showInputMethodPicker()
         }
 
-        setupClipboardListener()
+        // ── QWERTY Keys ─────────────────────────────────────────────
+        val keyShift = view.findViewById<Button>(R.id.keyShift)
+        val keyDelete = view.findViewById<Button>(R.id.keyDelete)
+        val keySpace = view.findViewById<Button>(R.id.keySpace)
+        val keyEnter = view.findViewById<Button>(R.id.keyEnter)
+        val keyComma = view.findViewById<Button>(R.id.keyComma)
+        val keyDot = view.findViewById<Button>(R.id.keyDot)
 
+        keyShift.setOnClickListener {
+            isShiftOn = !isShiftOn
+            keyShift.text = if (isShiftOn) "⇪" else "⇧"
+        }
+
+        keyDelete.setOnClickListener { handleDelete() }
+        keySpace.setOnClickListener { handleCharInput(" ") }
+        keyEnter.setOnClickListener {
+            currentInputConnection?.commitText("\n", 1)
+            currentWord.clear()
+        }
+        keyComma.setOnClickListener { handleCharInput(",") }
+        keyDot.setOnClickListener { handleCharInput(".") }
+
+        // Gán listener cho tất cả phím chữ
+        val letterKeys = mapOf(
+            R.id.keyQ to "q", R.id.keyW to "w", R.id.keyE to "e",
+            R.id.keyR to "r", R.id.keyT to "t", R.id.keyY to "y",
+            R.id.keyU to "u", R.id.keyI to "i", R.id.keyO to "o",
+            R.id.keyP to "p", R.id.keyA to "a", R.id.keyS to "s",
+            R.id.keyD to "d", R.id.keyF to "f", R.id.keyG to "g",
+            R.id.keyH to "h", R.id.keyJ to "j", R.id.keyK to "k",
+            R.id.keyL to "l", R.id.keyZ to "z", R.id.keyX to "x",
+            R.id.keyC to "c", R.id.keyV to "v", R.id.keyB to "b",
+            R.id.keyN to "n", R.id.keyM to "m"
+        )
+
+        for ((id, char) in letterKeys) {
+            view.findViewById<Button>(id).setOnClickListener {
+                val c = if (isShiftOn) char.uppercase() else char
+                handleCharInput(c)
+                if (isShiftOn) {
+                    isShiftOn = false
+                    keyShift.text = "⇧"
+                }
+            }
+        }
+
+        setupClipboardListener()
         return view
     }
+
+    // ── Telex Input Handling ────────────────────────────────────────
+
+    private fun handleCharInput(char: String) {
+        val ic = currentInputConnection ?: return
+
+        // Space hoặc dấu câu → commit word + char
+        if (char == " " || char == "," || char == "." || char == "\n") {
+            currentWord.clear()
+            ic.commitText(char, 1)
+            return
+        }
+
+        currentWord.append(char)
+        val buf = currentWord.toString()
+
+        // Kiểm tra tổ hợp nguyên âm (modifier)
+        for ((combo, replacement) in modifierMap) {
+            if (buf.endsWith(combo)) {
+                // Xóa số ký tự bằng với độ dài combo, rồi ghi replacement
+                repeat(combo.length) { ic.deleteSurroundingText(1, 0) }
+                ic.commitText(replacement, 1)
+                currentWord.replace(currentWord.length - combo.length, currentWord.length, replacement)
+                return
+            }
+        }
+
+        // Kiểm tra dấu thanh (tone)
+        for ((key, tone) in toneMap) {
+            if (buf.endsWith(key) && buf.length > 1) {
+                // Thử thêm dấu vào nguyên âm cuối trong từ
+                val baseText = buf.dropLast(key.length)
+                val toned = applyTone(baseText, tone)
+                if (toned != null) {
+                    // Xóa toàn bộ từ rồi commit lại với dấu
+                    repeat(baseText.length + key.length - toned.length + toned.length) {
+                        ic.deleteSurroundingText(1, 0)
+                    }
+                    // Xóa sạch và commit lại từ mới
+                    repeat(buf.length) { ic.deleteSurroundingText(1, 0) }
+                    ic.commitText(toned, 1)
+                    currentWord.clear()
+                    currentWord.append(toned)
+                    return
+                }
+            }
+        }
+
+        // Gõ bình thường
+        ic.commitText(char, 1)
+    }
+
+    private fun handleDelete() {
+        val ic = currentInputConnection ?: return
+        ic.deleteSurroundingText(1, 0)
+        if (currentWord.isNotEmpty()) currentWord.deleteCharAt(currentWord.length - 1)
+    }
+
+    /**
+     * Tìm nguyên âm cuối trong chuỗi và thêm dấu thanh (NFC).
+     * Trả về null nếu không tìm được nguyên âm.
+     */
+    private fun applyTone(base: String, tone: String): String? {
+        val vowels = "aăâeêioôơuưy"
+        // Tìm nguyên âm từ cuối ngược lên
+        for (i in base.indices.reversed()) {
+            if (base[i].lowercaseChar() in vowels) {
+                val withTone = Normalizer.normalize(base[i].toString() + tone, Normalizer.Form.NFC)
+                return base.substring(0, i) + withTone + base.substring(i + 1)
+            }
+        }
+        return null
+    }
+
+    // ── Bot UI ──────────────────────────────────────────────────────
 
     private fun updateUI(btnMode: Button, btnPause: Button) {
         if (isPaused) {
@@ -118,6 +278,8 @@ class BotKeyboardService : InputMethodService() {
         }
     }
 
+    // ── Clipboard Listener ──────────────────────────────────────────
+
     private fun setupClipboardListener() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.addPrimaryClipChangedListener {
@@ -126,41 +288,44 @@ class BotKeyboardService : InputMethodService() {
             val clip = clipboard.primaryClip
             if (clip != null && clip.itemCount > 0) {
                 val text = clip.getItemAt(0).text?.toString() ?: return@addPrimaryClipChangedListener
-                processCopiedText(text)
+                val normText = normalize(text)
+                if (normText.isEmpty()) return@addPrimaryClipChangedListener
+
+                val parts = normText.split("\\s+".toRegex())
+                if (parts.size > 2) {
+                    tvStatus.text = "Văn bản dài quá, bỏ qua."
+                    return@addPrimaryClipChangedListener
+                }
+
+                val suggestion = if (parts.size == 1) {
+                    val ranked = suggestFromFirst(parts[0], 15)
+                    pickOneWord(ranked)
+                } else {
+                    val candidates = suggestNext(normText, 15)
+                    if (candidates.isEmpty()) {
+                        tvStatus.text = "Không tìm thấy từ tiếp theo!"
+                        null
+                    } else {
+                        pickTwoWord(candidates)?.phrase
+                    }
+                }
+
+                if (suggestion != null && suggestion != normText) {
+                    // Ở chế độ QWERTY (stealth): chỉ hiển thị gợi ý, không tự gõ
+                    if (isStealthMode) {
+                        tvStatus.text = "Gợi ý: $suggestion  (nhấn 🤖 để dùng Bot)"
+                    } else {
+                        tvStatus.text = "Đã dán: $suggestion"
+                        currentInputConnection?.commitText(suggestion, 1)
+                    }
+                } else if (suggestion == null) {
+                    tvStatus.text = "Không có gợi ý."
+                }
             }
         }
     }
 
-    private fun processCopiedText(rawText: String) {
-        val normText = normalize(rawText)
-        if (normText.isEmpty()) return
-
-        val parts = normText.split("\\s+".toRegex())
-        if (parts.size > 2) {
-            tvStatus.text = "Văn bản dài quá, bỏ qua."
-            return
-        }
-
-        val suggestion = if (parts.size == 1) {
-            val ranked = suggestFromFirst(parts[0], 15)
-            pickOneWord(ranked)
-        } else {
-            val candidates = suggestNext(normText, 15)
-            if (candidates.isEmpty()) {
-                tvStatus.text = "Không tìm thấy từ tiếp theo!"
-                null
-            } else {
-                pickTwoWord(candidates)?.phrase
-            }
-        }
-
-        if (suggestion != null && suggestion != normText) {
-            tvStatus.text = "Đã dán: $suggestion"
-            currentInputConnection?.commitText(suggestion, 1)
-        } else if (suggestion == null) {
-            tvStatus.text = "Không có gợi ý."
-        }
-    }
+    // ── Dictionary & Logic ──────────────────────────────────────────
 
     private fun normalize(s: String): String {
         val nfc = Normalizer.normalize(s.trim(), Normalizer.Form.NFC)
@@ -173,44 +338,28 @@ class BotKeyboardService : InputMethodService() {
             val reader = BufferedReader(InputStreamReader(inputStream))
             var line: String?
             var index = 0
-
             while (reader.readLine().also { line = it } != null) {
                 val text = normalize(line!!)
                 if (text.isEmpty()) continue
                 val parts = text.split(" ")
                 if (parts.size != 2) continue
-
-                val first = parts[0]
-                val last = parts[1]
-
+                val first = parts[0]; val last = parts[1]
                 phraseSet.add(text)
-                if (!byFirst.containsKey(first)) {
-                    byFirst[first] = mutableListOf()
-                }
-                byFirst[first]?.add(index)
+                byFirst.getOrPut(first) { mutableListOf() }.add(index)
                 phrases.add(Phrase(text, last))
                 index++
             }
             reader.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        } catch (e: Exception) { e.printStackTrace() }
     }
 
-    /**
-     * Tìm gợi ý từ từ thứ 2 của cụm, trả về RankedPhrase có nextCount.
-     * Sort theo mode: tăng dần (TOP/SMART) hoặc giảm dần (BOTTOM).
-     */
     private fun suggestNext(phrase: String, topN: Int): List<RankedPhrase> {
         val parts = phrase.split(" ")
         if (parts.size != 2) return emptyList()
-        val lastWord = parts[1]
-        val indices = byFirst[lastWord] ?: return emptyList()
-
+        val indices = byFirst[parts[1]] ?: return emptyList()
         val ranked = indices.take(200).map { i ->
             val p = phrases[i]
-            val nextCount = byFirst[p.last]?.size ?: 0
-            RankedPhrase(p.text, nextCount)
+            RankedPhrase(p.text, byFirst[p.last]?.size ?: 0)
         }
         return when (currentMode) {
             Mode.BOTTOM_TIER -> ranked.sortedByDescending { it.nextCount }.take(topN)
@@ -222,8 +371,7 @@ class BotKeyboardService : InputMethodService() {
         val indices = byFirst[firstWord] ?: return emptyList()
         val ranked = indices.take(200).map { i ->
             val p = phrases[i]
-            val nextCount = byFirst[p.last]?.size ?: 0
-            RankedPhrase(p.text, nextCount)
+            RankedPhrase(p.text, byFirst[p.last]?.size ?: 0)
         }
         return when (currentMode) {
             Mode.BOTTOM_TIER -> ranked.sortedByDescending { it.nextCount }.take(topN)
@@ -239,15 +387,13 @@ class BotKeyboardService : InputMethodService() {
                 candidates.filter { it.nextCount == best }.random()
             }
             Mode.SMART_RANDOM -> {
-                if (Random.nextDouble() < 0.25) {
-                    candidates.random()
-                } else {
+                if (Random.nextDouble() < 0.25) candidates.random()
+                else {
                     val best = candidates[0].nextCount
                     candidates.filter { it.nextCount == best }.random()
                 }
             }
             Mode.BOTTOM_TIER -> {
-                // Ưu tiên từ có hơn 4 cách nối tiếp
                 val rich = candidates.filter { it.nextCount > 4 }
                 if (rich.isNotEmpty()) rich.random() else candidates.random()
             }
@@ -258,21 +404,17 @@ class BotKeyboardService : InputMethodService() {
         if (ranked.isEmpty()) return null
         return when (currentMode) {
             Mode.TOP_TIER -> {
-                val bestCount = ranked[0].nextCount
-                val top = ranked.filter { it.nextCount == bestCount }
-                top.random().phrase
+                val best = ranked[0].nextCount
+                ranked.filter { it.nextCount == best }.random().phrase
             }
             Mode.SMART_RANDOM -> {
-                if (Random.nextDouble() < 0.25) {
-                    ranked.random().phrase
-                } else {
-                    val bestCount = ranked[0].nextCount
-                    val top = ranked.filter { it.nextCount == bestCount }
-                    top.random().phrase
+                if (Random.nextDouble() < 0.25) ranked.random().phrase
+                else {
+                    val best = ranked[0].nextCount
+                    ranked.filter { it.nextCount == best }.random().phrase
                 }
             }
             Mode.BOTTOM_TIER -> {
-                // Ưu tiên từ có hơn 4 cách nối tiếp
                 val rich = ranked.filter { it.nextCount > 4 }
                 if (rich.isNotEmpty()) rich.random().phrase else ranked.random().phrase
             }
