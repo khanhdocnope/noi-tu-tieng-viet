@@ -17,12 +17,10 @@ local.properties
 **/*.rs.bk
 
 # --- Compiled Executables ---
-*.exe
+
 *.dll
 *.so
 *.dylib
 
 # --- AI Agent / OpenSpec (Private) ---
-# .agent/
-# openspec/
-# .gemini/
+
