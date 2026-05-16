@@ -111,7 +111,7 @@ class BotKeyboardService : InputMethodService() {
                     tvStatus.text = "Chế độ top cuối. Chờ copy..."
                     tvModeBadge.text = "🔥 TOP CUỐI"
                     tvModeBadge.setTextColor(android.graphics.Color.parseColor("#FF7A00"))
-                    tvModeBadge.setBackgroundResource(R.drawable.btn_muted)
+                    tvModeBadge.setBackgroundResource(R.drawable.badge_bottom)
                     viewDot.setBackgroundColor(android.graphics.Color.parseColor("#FF7A00"))
                 }
             }
