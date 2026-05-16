@@ -17,12 +17,17 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="8dp">
 
-        <!-- App brand dot -->
-        <View
-            android:layout_width="6dp"
-            android:layout_height="6dp"
-            android:background="@color/accent_cyan"
-            android:layout_marginEnd="8dp"/>
+        <!-- Stealth Toggle Button (bí mật) -->
+        <TextView
+            android:id="@+id/btnStealthToggle"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:text="⌨"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:background="@drawable/bg_status"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/accent_cyan"/>
 
         <TextView
             android:layout_width="0dp"
@@ -34,7 +39,7 @@
             android:letterSpacing="0.15"
             android:textStyle="bold"/>
 
-        <!-- Mode Badge -->
+        <!-- Mode Badge (chỉ hiện ở Bot mode) -->
         <TextView
             android:id="@+id/tvModeBadge"
             android:layout_width="wrap_content"
@@ -60,11 +65,10 @@
         android:gravity="center_vertical"
         android:paddingLeft="12dp"
         android:paddingRight="12dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:layout_marginBottom="10dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginBottom="8dp">
 
-        <!-- Pulsing dot indicator -->
         <View
             android:id="@+id/viewDot"
             android:layout_width="10dp"
@@ -85,15 +89,16 @@
             android:ellipsize="end"/>
     </LinearLayout>
 
-    <!-- ══ Action Buttons Row ══ -->
+    <!-- ══ BOT CONTROL VIEW (hiện mặc định) ══ -->
     <LinearLayout
+        android:id="@+id/layoutBotControl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="10"
-        android:layout_marginBottom="2dp">
+        android:layout_marginBottom="2dp"
+        android:visibility="visible">
 
-        <!-- Mode Toggle -->
         <Button
             android:id="@+id/btnMode"
             style="@style/Btn.Neon"
@@ -104,7 +109,6 @@
             android:text="🎯  CỰC PHẨM"
             android:textSize="12sp"/>
 
-        <!-- Pause -->
         <Button
             android:id="@+id/btnPause"
             style="@style/Btn.Muted"
@@ -115,7 +119,6 @@
             android:text="⏸  Dừng"
             android:textSize="12sp"/>
 
-        <!-- Switch Keyboard -->
         <Button
             android:id="@+id/btnSwitch"
             style="@style/Btn.Accent"
@@ -124,7 +127,80 @@
             android:layout_weight="3"
             android:text="🌐  Đổi"
             android:textSize="12sp"/>
+    </LinearLayout>
 
+    <!-- ══ QWERTY KEYBOARD VIEW (ẩn mặc định) ══ -->
+    <LinearLayout
+        android:id="@+id/layoutQwerty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Hàng 1: q w e r t y u i o p -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            <Button android:id="@+id/keyQ" style="@style/Key.Letter" android:text="q"/>
+            <Button android:id="@+id/keyW" style="@style/Key.Letter" android:text="w"/>
+            <Button android:id="@+id/keyE" style="@style/Key.Letter" android:text="e"/>
+            <Button android:id="@+id/keyR" style="@style/Key.Letter" android:text="r"/>
+            <Button android:id="@+id/keyT" style="@style/Key.Letter" android:text="t"/>
+            <Button android:id="@+id/keyY" style="@style/Key.Letter" android:text="y"/>
+            <Button android:id="@+id/keyU" style="@style/Key.Letter" android:text="u"/>
+            <Button android:id="@+id/keyI" style="@style/Key.Letter" android:text="i"/>
+            <Button android:id="@+id/keyO" style="@style/Key.Letter" android:text="o"/>
+            <Button android:id="@+id/keyP" style="@style/Key.Letter" android:text="p"/>
+        </LinearLayout>
+
+        <!-- Hàng 2: a s d f g h j k l -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+            <Button android:id="@+id/keyA" style="@style/Key.Letter" android:text="a"/>
+            <Button android:id="@+id/keyS" style="@style/Key.Letter" android:text="s"/>
+            <Button android:id="@+id/keyD" style="@style/Key.Letter" android:text="d"/>
+            <Button android:id="@+id/keyF" style="@style/Key.Letter" android:text="f"/>
+            <Button android:id="@+id/keyG" style="@style/Key.Letter" android:text="g"/>
+            <Button android:id="@+id/keyH" style="@style/Key.Letter" android:text="h"/>
+            <Button android:id="@+id/keyJ" style="@style/Key.Letter" android:text="j"/>
+            <Button android:id="@+id/keyK" style="@style/Key.Letter" android:text="k"/>
+            <Button android:id="@+id/keyL" style="@style/Key.Letter" android:text="l"/>
+        </LinearLayout>
+
+        <!-- Hàng 3: shift z x c v b n m del -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="4dp">
+            <Button android:id="@+id/keyShift" style="@style/Key.Action" android:layout_width="0dp" android:layout_weight="1.5" android:text="⇧"/>
+            <Button android:id="@+id/keyZ" style="@style/Key.Letter" android:text="z"/>
+            <Button android:id="@+id/keyX" style="@style/Key.Letter" android:text="x"/>
+            <Button android:id="@+id/keyC" style="@style/Key.Letter" android:text="c"/>
+            <Button android:id="@+id/keyV" style="@style/Key.Letter" android:text="v"/>
+            <Button android:id="@+id/keyB" style="@style/Key.Letter" android:text="b"/>
+            <Button android:id="@+id/keyN" style="@style/Key.Letter" android:text="n"/>
+            <Button android:id="@+id/keyM" style="@style/Key.Letter" android:text="m"/>
+            <Button android:id="@+id/keyDelete" style="@style/Key.Action" android:layout_width="0dp" android:layout_weight="1.5" android:text="⌫"/>
+        </LinearLayout>
+
+        <!-- Hàng 4: dấu cách, enter -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal">
+            <Button android:id="@+id/keyComma" style="@style/Key.Action" android:layout_width="0dp" android:layout_weight="1.5" android:text=","/>
+            <Button android:id="@+id/keySpace" style="@style/Key.Space" android:layout_width="0dp" android:layout_weight="6" android:text="Khoảng trắng"/>
+            <Button android:id="@+id/keyDot" style="@style/Key.Action" android:layout_width="0dp" android:layout_weight="1.5" android:text="."/>
+            <Button android:id="@+id/keyEnter" style="@style/Key.Action" android:layout_width="0dp" android:layout_weight="2" android:text="↩"/>
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
